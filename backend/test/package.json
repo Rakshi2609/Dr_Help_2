@@ -1,0 +1,13 @@
+{
+  "name": "test-api",
+  "version": "1.0.0",
+  "description": "Test script for PainSense API",
+  "main": "test-api.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test-api.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  }
+}

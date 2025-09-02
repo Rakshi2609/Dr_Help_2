@@ -4,7 +4,6 @@ import { env } from 'process';
 
 // Load API key from environment or use a development fallback
 const getApiKey = () => {
-  // In production, this should come from environment variables
   const apiKey = env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
   
   // For development/demo purposes only

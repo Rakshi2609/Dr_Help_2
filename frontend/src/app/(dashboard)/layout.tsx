@@ -6,6 +6,7 @@ import React, { type ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { NavigationGuard } from '@/components/NavigationGuard'
+import { LogoutButton } from '@/components/LogoutButton'
 import {
   Avatar,
   AvatarFallback,
@@ -173,11 +174,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem>Support</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Link>
+                <DropdownMenuItem className="p-0">
+                  <div className="w-full px-2 py-1.5">
+                    <LogoutButton showText={true} />
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

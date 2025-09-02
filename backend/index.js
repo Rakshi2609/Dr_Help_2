@@ -30,9 +30,36 @@ const connectDB = async () => {
 // Connect to MongoDB
 connectDB();
 
+// CORS configuration with detailed options
+const corsOptions = {
+  origin: function (origin, callback) {
+    console.log(`Request origin: ${origin || 'No origin (same origin)'}`);
+    // Allow any origin for development
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'Cache-Control', 'X-Requested-With'],
+  exposedHeaders: ['x-auth-token']
+};
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors(corsOptions));
+
+// JSON body parser with request logging
+app.use(express.json({
+  verify: (req, res, buf, encoding) => {
+    if (buf && buf.length) {
+      try {
+        const body = JSON.parse(buf.toString());
+        console.log(`Request body to ${req.url}:`, body);
+      } catch (e) {
+        console.log('Could not log request body (not valid JSON)');
+      }
+    }
+  }
+}));
+
 app.use(express.urlencoded({ extended: true }));
 
 // Routes

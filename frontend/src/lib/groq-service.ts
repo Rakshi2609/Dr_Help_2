@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY || '',
   dangerouslyAllowBrowser: true, // Enable client-side usage
 });
 
@@ -28,8 +28,8 @@ export class GroqChatService {
     try {
       // Check if API key is configured
       const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
-      if (!apiKey || apiKey === 'your_groq_api_key_here') {
-        throw new Error('Groq API key is not configured. Please set NEXT_PUBLIC_GROQ_API_KEY in your .env.local file.');
+      if (!apiKey || apiKey === 'your_groq_api_key_here' || apiKey.trim() === '') {
+        throw new Error('API key configuration error. Please check your Groq API key.\n\nSteps to fix:\n1. Get your API key from https://console.groq.com/keys\n2. Add it to frontend/.env.local as:\n   NEXT_PUBLIC_GROQ_API_KEY=your_actual_api_key\n3. Restart the development server');
       }
 
       console.log('🚀 Sending message to Groq API...', { messageCount: messages.length });

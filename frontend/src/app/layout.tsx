@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { Toaster } from '@/components/ui/toaster'
+import { HealthChatbot } from '@/components/HealthChatbot'
 import { cn } from '@/lib/utils'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -31,7 +32,10 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <AuthProvider>
-            {children}
+            <div className="relative min-h-screen">
+              {children}
+              <HealthChatbot />
+            </div>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

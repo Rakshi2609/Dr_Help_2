@@ -1,0 +1,35 @@
+[
+  { 
+    "id": "D001", 
+    "name": "Dr. Sarah Johnson", 
+    "specialty": "Pain Management", 
+    "achievements": [
+      "Published research on chronic pain management in leading medical journals",
+      "Developed innovative treatment protocols for neuropathic pain",
+      "Awarded 'Physician of the Year' at Memorial Hospital"
+    ],
+    "avatar": "https://picsum.photos/id/101/200/200"
+  },
+  { 
+    "id": "D002", 
+    "name": "Dr. Michael Chen", 
+    "specialty": "Oncology", 
+    "achievements": [
+      "Pioneer in cancer pain management techniques",
+      "Lead researcher in clinical trials for pain medication",
+      "Board member of the American Pain Society"
+    ],
+    "avatar": "https://picsum.photos/id/102/200/200"
+  },
+  { 
+    "id": "D003", 
+    "name": "Dr. Elena Rodriguez", 
+    "specialty": "Neurology", 
+    "achievements": [
+      "Developed breakthrough protocol for migraine management",
+      "Speaker at International Pain Symposium (2024)",
+      "Published author of 'Neural Pathways of Pain'"
+    ],
+    "avatar": "https://picsum.photos/id/103/200/200"
+  }
+]

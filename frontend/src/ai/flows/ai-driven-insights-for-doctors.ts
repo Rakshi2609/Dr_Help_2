@@ -23,8 +23,33 @@ const AIDrivenInsightsOutputSchema = z.object({
 });
 export type AIDrivenInsightsOutput = z.infer<typeof AIDrivenInsightsOutputSchema>;
 
+import { mockAIService } from '@/ai/dev';
+
 export async function getAIDrivenInsights(input: AIDrivenInsightsInput): Promise<AIDrivenInsightsOutput> {
-  return aiDrivenInsightsFlow(input);
+  try {
+    // First try the AI flow
+    try {
+      return await aiDrivenInsightsFlow(input);
+    } catch (aiError) {
+      console.warn('Primary AI flow failed, trying fallback service:', aiError);
+      
+      // If we're in development mode or AI service fails, use our mock service
+      if (process.env.NODE_ENV === 'development' || !process.env.GOOGLE_API_KEY) {
+        return await mockAIService(input);
+      }
+      
+      // If all else fails, generate basic insights
+      throw aiError; // Re-throw to trigger the catch below
+    }
+  } catch (error) {
+    console.error('All AI services failed:', error);
+    // Return very basic fallback insights when everything fails
+    return {
+      insights: `Based on the patient's pain score (${input.painScore}) and vitals data, consider reviewing current pain management protocol. ${
+        input.alerts.length > 0 ? `Note that the following alerts require attention: ${input.alerts.join(', ')}.` : ''
+      }`
+    };
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -44,14 +69,48 @@ const prompt = ai.definePrompt({
   `,
 });
 
+// Helper function to generate insights locally when API fails
+function generateFallbackInsights(input: AIDrivenInsightsInput): AIDrivenInsightsOutput {
+  const { painScore, alerts } = input;
+  
+  // Generate appropriate recommendations based on pain level
+  let recommendations = '';
+  
+  if (painScore >= 7) {
+    recommendations = `The patient is reporting a high pain score of ${painScore}. Consider immediate assessment and possible adjustment of pain medication.`;
+  } else if (painScore >= 4) {
+    recommendations = `The patient is reporting moderate pain (${painScore}/10). Regular monitoring and scheduled pain medication is advised.`;
+  } else {
+    recommendations = `The patient's pain appears to be under control (${painScore}/10). Continue current treatment plan and monitor for changes.`;
+  }
+  
+  // Add alert-specific recommendations
+  if (alerts.length > 0) {
+    recommendations += ` Patient has ${alerts.length} active alert(s) that require attention: ${alerts.join(', ')}.`;
+  }
+  
+  return {
+    insights: recommendations
+  };
+}
+
 const aiDrivenInsightsFlow = ai.defineFlow(
   {
     name: 'aiDrivenInsightsFlow',
     inputSchema: AIDrivenInsightsInputSchema,
     outputSchema: AIDrivenInsightsOutputSchema,
+    // Set timeout to avoid hanging
+    timeout: 5000,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      // Try to get insights from the AI model
+      const {output} = await prompt(input);
+      return output!;
+    } catch (error) {
+      // Log error and use fallback
+      console.error('AI model error:', error);
+      return generateFallbackInsights(input);
+    }
   }
 );

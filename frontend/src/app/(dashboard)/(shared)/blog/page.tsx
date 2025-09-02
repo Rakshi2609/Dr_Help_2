@@ -1,6 +1,6 @@
-import { promises as fs } from 'fs'
-import path from 'path'
-import Link from 'next/link'
+'use client'
+
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -10,18 +10,48 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { format } from 'date-fns'
 
 type BlogPost = {
   title: string
   description: string
   date: string
+  author: string
+  content: string
 }
 
-export default async function BlogPage() {
-  const jsonPath = path.join(process.cwd(), 'src', 'data', 'blog.json')
-  const file = await fs.readFile(jsonPath, 'utf8')
-  const posts: BlogPost[] = JSON.parse(file)
+export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // Load blog posts on component mount
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const response = await fetch('/api/blog')
+        const data = await response.json()
+        setPosts(data)
+      } catch (error) {
+        console.error('Failed to load blog posts:', error)
+      }
+    }
+    loadPosts()
+  }, [])
+
+  // Function to open dialog with selected post
+  const handleReadMore = (post: BlogPost) => {
+    setSelectedPost(post);
+    setIsDialogOpen(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -49,13 +79,46 @@ export default async function BlogPage() {
               <p>{post.description}</p>
             </CardContent>
             <CardFooter>
-              <Button asChild variant="link" className="p-0">
-                <Link href="#">Read More &rarr;</Link>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => handleReadMore(post)}
+              >
+                Read More &rarr;
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
+
+      {/* Blog Post Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
+          {selectedPost && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl">{selectedPost.title}</DialogTitle>
+                <DialogDescription className="flex justify-between items-center text-sm">
+                  <span>By {selectedPost.author}</span>
+                  <span>{format(new Date(selectedPost.date), 'MMMM d, yyyy')}</span>
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="mt-4 space-y-4">
+                {selectedPost.content.split('\n\n').map((paragraph, i) => (
+                  <p key={i} className="leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

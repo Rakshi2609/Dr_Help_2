@@ -15,12 +15,22 @@ type AIInsightsCardProps = {
 export default async function AIInsightsCard({
   patientId,
 }: AIInsightsCardProps) {
-  const insightsData = await getAIDrivenInsights({
-    patientId: patientId,
-    vitalsSummary: 'Heart rate elevated, temperature normal.',
-    painScore: 8,
-    alerts: ['High pain score reported', 'Medication due'],
-  })
+  let insightsData;
+  
+  try {
+    insightsData = await getAIDrivenInsights({
+      patientId: patientId,
+      vitalsSummary: 'Heart rate elevated, temperature normal.',
+      painScore: 8,
+      alerts: ['High pain score reported', 'Medication due'],
+    });
+  } catch (error) {
+    console.error('Failed to get AI insights:', error);
+    // Fallback data in case of error
+    insightsData = {
+      insights: "Unable to generate AI insights at this time. Recommend reviewing patient's vital signs and pain score manually."
+    };
+  }
 
   return (
     <Card className="bg-secondary/50 dark:bg-secondary/20 border-primary/20">

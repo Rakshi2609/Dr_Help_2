@@ -2,9 +2,10 @@
 
 'use client'
 
-import React, { type ReactNode } from 'react'
+import React, { type ReactNode, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { NavigationGuard } from '@/components/NavigationGuard'
 import {
   Avatar,
   AvatarFallback,
@@ -47,7 +48,8 @@ import {
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const isDoctor = pathname.startsWith('/doctor')
+  // More robust detection for doctor/patient path context
+  const isDoctor = pathname.includes('/doctor')
 
   const userRole = isDoctor ? 'Doctor' : 'Patient'
   const userPrefix = isDoctor ? '/doctor' : '/patient'
@@ -64,33 +66,53 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     navItems.push({ href: `${userPrefix}/alerts`, icon: Bell, label: 'Alerts' })
   }
 
-  navItems.push(
-    { href: '/about', icon: Info, label: 'About Us' },
-    { href: '/achievements', icon: Award, label: 'Achievements' },
-    { href: '/blog', icon: Newspaper, label: 'Blog' }
-  )
+  // Add shared navigation items with role context preserved
+  if (isDoctor) {
+    // For doctor role, use doctor-prefixed paths
+    navItems.push(
+      { href: `/doctor/about`, icon: Info, label: 'About Us' },
+      { href: `/doctor/achievements`, icon: Award, label: 'Achievements' },
+      { href: `/doctor/blog`, icon: Newspaper, label: 'Blog' }
+    );
+  } else {
+    // For patient role, use patient-prefixed paths
+    navItems.push(
+      { href: `/patient/about`, icon: Info, label: 'About Us' },
+      { href: `/patient/achievements`, icon: Award, label: 'Achievements' },
+      { href: `/patient/blog`, icon: Newspaper, label: 'Blog' }
+    );
+  }
 
 
   const settingsHref = isDoctor ? '/doctor/settings' : '/patient/settings'
 
+  // Store the user role in localStorage when it's determined
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userRole', isDoctor ? 'doctor' : 'patient')
+    }
+  }, [isDoctor])
+
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Link href="/" className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Stethoscope className="h-6 w-6 text-primary" />
-            </Button>
-            <h1 className="text-xl font-semibold font-headline">PainSense</h1>
-          </Link>
-        </SidebarHeader>
+    <NavigationGuard>
+      <SidebarProvider>
+        <Sidebar>
+          <SidebarHeader>
+            <Link href="/" className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Stethoscope className="h-6 w-6 text-primary" />
+              </Button>
+              <h1 className="text-xl font-semibold font-headline">PainSense</h1>
+            </Link>
+          </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname === item.href || 
+                           (item.href !== '/' && pathname.startsWith(item.href))}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
@@ -164,5 +186,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
+    </NavigationGuard>
   )
 }

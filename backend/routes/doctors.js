@@ -95,4 +95,45 @@ router.get('/patients/:patientId', auth, async (req, res) => {
   }
 });
 
+// @route   GET api/doctors/patients/:patientId/history
+// @desc    Get a patient's history (last 3 records of each type)
+// @access  Private (doctors only)
+router.get('/patients/:patientId/history', auth, async (req, res) => {
+  try {
+    // Check if user is a doctor
+    const user = await User.findById(req.user.id);
+    
+    if (!user || user.role !== 'doctor') {
+      return res.status(401).json({ msg: 'Not authorized as a doctor' });
+    }
+    
+    const doctor = await Doctor.findOne({ userId: req.user.id });
+    
+    if (!doctor) {
+      return res.status(404).json({ msg: 'Doctor profile not found' });
+    }
+    
+    const patient = await Patient.findOne({ 
+      _id: req.params.patientId,
+      doctorId: doctor._id 
+    });
+    
+    if (!patient) {
+      return res.status(404).json({ msg: 'Patient not found or not assigned to you' });
+    }
+    
+    // Get last 3 records of each type
+    const history = {
+      painScores: patient.painScores || [],
+      temperatures: patient.temperatures || [],
+      vitals: patient.vitalsHistory || []
+    };
+    
+    res.json(history);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 export default router;

@@ -30,11 +30,15 @@ npm run dev
 - `GET /api/doctors/me` - Get doctor profile (requires doctor auth)
 - `GET /api/doctors/patients` - Get all patients for a doctor (requires doctor auth)
 - `GET /api/doctors/patients/:patientId` - Get a specific patient's details (requires doctor auth)
+- `GET /api/doctors/patients/:patientId/history` - Get last 3 records of patient's pain scores, temperature, and vitals (requires doctor auth)
 
 ### Patient Routes
 
 - `GET /api/patients/me` - Get patient profile (requires patient auth)
 - `POST /api/patients/pain-scores` - Add a new pain score record (requires patient auth)
+- `POST /api/patients/temperature` - Add a new temperature record (requires patient auth)
+- `POST /api/patients/vitals` - Add a new vitals record (requires patient auth)
+- `GET /api/patients/history` - Get last 3 records of pain scores, temperature, and vitals (requires patient auth)
 - `GET /api/patients/alerts` - Get all alerts for a patient (requires patient auth)
 - `PUT /api/patients/alerts/:alertId` - Mark an alert as read (requires patient auth)
 
@@ -50,4 +54,9 @@ x-auth-token: YOUR_JWT_TOKEN
 
 - **User**: Basic user information and authentication
 - **Doctor**: Doctor-specific information and relations
-- **Patient**: Patient health data, pain scores, and alerts
+- **Patient**: Patient health data including:
+  - Last 3 pain scores
+  - Last 3 temperature readings
+  - Last 3 vital sign records (heart rate, blood pressure)
+  - Current vitals
+  - Alerts

@@ -10,6 +10,7 @@ const patientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor'
   },
+  // Store the last 3 pain scores
   painScores: [{
     score: {
       type: Number,
@@ -23,6 +24,24 @@ const patientSchema = new mongoose.Schema({
     },
     notes: String
   }],
+  // Store the last 3 temperature readings
+  temperatures: [{
+    value: String,
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  // Store the last 3 vital sign readings
+  vitalsHistory: [{
+    heartRate: String,
+    bloodPressure: String,
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  // Current vitals (most recent)
   vitals: {
     heartRate: String,
     bloodPressure: String,
@@ -45,6 +64,26 @@ const patientSchema = new mongoose.Schema({
       default: Date.now
     }
   }]
+});
+
+// Pre-save hook to limit arrays to last 3 entries
+patientSchema.pre('save', function(next) {
+  // Limit painScores to last 3 entries
+  if (this.painScores && this.painScores.length > 3) {
+    this.painScores = this.painScores.slice(-3);
+  }
+  
+  // Limit temperatures to last 3 entries
+  if (this.temperatures && this.temperatures.length > 3) {
+    this.temperatures = this.temperatures.slice(-3);
+  }
+  
+  // Limit vitalsHistory to last 3 entries
+  if (this.vitalsHistory && this.vitalsHistory.length > 3) {
+    this.vitalsHistory = this.vitalsHistory.slice(-3);
+  }
+  
+  next();
 });
 
 const Patient = mongoose.model('Patient', patientSchema);

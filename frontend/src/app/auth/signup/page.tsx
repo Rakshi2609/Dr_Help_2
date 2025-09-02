@@ -125,6 +125,10 @@ export default function PatientSignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
             </div>
+            
+            <div className="text-sm text-muted-foreground mt-2">
+              <p>Your doctor will fill in your medical information during your appointment.</p>
+            </div>
           </CardContent>
           <CardFooter>
             <Button

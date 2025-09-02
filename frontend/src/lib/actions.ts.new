@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { redirect } from 'next/navigation'
 
@@ -190,6 +190,16 @@ export async function signupPatient(formData: FormData) {
   try {
     console.log("Attempting patient registration for email:", email);
     
+    // Extract medical information
+    const age = formData.get('age')?.toString();
+    const bmi = formData.get('bmi')?.toString();
+    const gender = formData.get('gender')?.toString();
+    const hasDiabetes = formData.get('hasDiabetes')?.toString();
+    const painLevel = formData.get('painLevel')?.toString();
+    const surgeryDuration = formData.get('surgeryDuration')?.toString();
+    const surgeryType = formData.get('surgeryType')?.toString();
+    const anesthesiaType = formData.get('anesthesiaType')?.toString();
+    
     // Make a direct fetch call from the server action
     const response = await fetch(API_BASE_URL + '/auth/register', {
       method: 'POST',
@@ -200,7 +210,15 @@ export async function signupPatient(formData: FormData) {
         name, 
         email, 
         password,
-        role: 'patient'
+        role: 'patient',
+        age,
+        bmi,
+        gender,
+        hasDiabetes,
+        painLevel,
+        surgeryDuration,
+        surgeryType,
+        anesthesiaType
       }),
       cache: 'no-store',
     });
@@ -334,4 +352,3 @@ export async function updatePatient(formData: FormData, patientId: string, token
     return { success: false, error: 'Server error. Please try again.' };
   }
 }
-

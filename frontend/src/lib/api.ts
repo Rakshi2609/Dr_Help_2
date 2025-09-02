@@ -7,6 +7,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/a
 export async function apiRequest(endpoint: string, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  console.log(`API Request to: ${url}`, {
+    headers: {
+      ...getAuthHeader(),
+      ...(options as any).headers,
+    }
+  });
+  
   try {
     const response = await fetch(url, {
       ...options,
@@ -19,12 +26,18 @@ export async function apiRequest(endpoint: string, options = {}) {
 
     // Check if the response is ok (status in the range 200-299)
     if (!response.ok) {
+      console.error(`API error response: ${response.status}`);
       // Try to parse error response
       const errorData = await response.json().catch(() => null);
+      if (errorData) {
+        console.error('Error data:', errorData);
+      }
       throw new Error(errorData?.msg || `API error: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`API Response from ${endpoint}:`, data);
+    return data;
   } catch (error) {
     console.error(`API request failed: ${endpoint}`, error);
     throw error;
@@ -34,9 +47,21 @@ export async function apiRequest(endpoint: string, options = {}) {
 // Get auth header if token exists
 function getAuthHeader() {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    return token ? { 'x-auth-token': token } : {};
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        console.log('Found auth token');
+        return { 'Authorization': `Bearer ${token}` };
+      } else {
+        console.log('No auth token found in localStorage');
+        return {};
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      return {};
+    }
   }
+  console.log('Running in server context, no auth header');
   return {};
 }
 
@@ -95,17 +120,38 @@ export const doctorAPI = {
 
   // Get all patients for a doctor
   async getPatients() {
-    return apiRequest('/doctors/patients');
+    try {
+      console.log('Fetching patients for doctor');
+      return await apiRequest('/doctors/patients');
+    } catch (error) {
+      console.error('Error in getPatients:', error);
+      // Return empty array instead of throwing to prevent UI errors
+      return [];
+    }
   },
 
   // Get a specific patient
   async getPatient(patientId: string) {
-    return apiRequest(`/doctors/patients/${patientId}`);
+    try {
+      console.log(`Fetching patient with ID: ${patientId}`);
+      return await apiRequest(`/doctors/patients/${patientId}`);
+    } catch (error) {
+      console.error(`Error fetching patient ${patientId}:`, error);
+      throw error; // We want the UI to handle this error
+    }
   },
 
   // Get a patient's history
   async getPatientHistory(patientId: string) {
     return apiRequest(`/doctors/patients/${patientId}/history`);
+  },
+  
+  // Update a patient's medical information
+  async updatePatient(patientId: string, patientData: any) {
+    return apiRequest(`/doctors/patients/${patientId}`, {
+      method: 'PUT',
+      body: JSON.stringify(patientData),
+    });
   },
 };
 

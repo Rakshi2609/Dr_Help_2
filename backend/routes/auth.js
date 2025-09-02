@@ -57,8 +57,29 @@ router.post('/register', async (req, res) => {
       console.log('Doctor profile saved successfully');
     } else if (role === 'patient') {
       console.log('Creating patient profile');
+      
+      // Extract patient-specific fields if provided
+      const {
+        age = 0,
+        bmi = 0,
+        gender = 'Other',
+        hasDiabetes = false,
+        painLevel = 0,
+        surgeryDuration = 0,
+        surgeryType = '',
+        anesthesiaType = ''
+      } = req.body;
+      
       const patient = new Patient({
         userId: user.id,
+        age: Number(age),
+        bmi: Number(bmi),
+        gender,
+        hasDiabetes: Boolean(Number(hasDiabetes)),
+        painLevel: Number(painLevel),
+        surgeryDuration: Number(surgeryDuration),
+        surgeryType,
+        anesthesiaType,
         painScores: [],
         vitals: {
           heartRate: '0',
@@ -180,6 +201,77 @@ router.get('/user', auth, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+});
+
+// @route   PUT api/auth/update-profile
+// @desc    Update user profile
+// @access  Private
+router.put('/update-profile', auth, async (req, res) => {
+  console.log('Update profile endpoint hit with body:', req.body);
+  
+  try {
+    // Get user role
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    
+    // Update user basic info
+    if (req.body.name || req.body.email) {
+      const userUpdate = {};
+      if (req.body.name) userUpdate.name = req.body.name;
+      if (req.body.email) {
+        // Check if email already exists
+        const existingUser = await User.findOne({ email: req.body.email });
+        if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+          return res.status(400).json({ msg: 'Email already in use' });
+        }
+        userUpdate.email = req.body.email;
+      }
+      
+      await User.findByIdAndUpdate(user._id, userUpdate);
+    }
+    
+    // If user is a patient, update patient-specific info
+    if (user.role === 'patient') {
+      const patientProfile = await Patient.findOne({ userId: user._id });
+      
+      if (!patientProfile) {
+        return res.status(404).json({ msg: 'Patient profile not found' });
+      }
+      
+      // Update patient fields
+      const patientUpdate = {};
+      if (req.body.age !== undefined) patientUpdate.age = Number(req.body.age);
+      if (req.body.bmi !== undefined) patientUpdate.bmi = Number(req.body.bmi);
+      if (req.body.gender !== undefined) patientUpdate.gender = req.body.gender;
+      if (req.body.hasDiabetes !== undefined) patientUpdate.hasDiabetes = Boolean(Number(req.body.hasDiabetes));
+      if (req.body.painLevel !== undefined) patientUpdate.painLevel = Number(req.body.painLevel);
+      if (req.body.surgeryDuration !== undefined) patientUpdate.surgeryDuration = Number(req.body.surgeryDuration);
+      if (req.body.surgeryType !== undefined) patientUpdate.surgeryType = req.body.surgeryType;
+      if (req.body.anesthesiaType !== undefined) patientUpdate.anesthesiaType = req.body.anesthesiaType;
+      
+      console.log('Updating patient profile with:', patientUpdate);
+      
+      await Patient.findByIdAndUpdate(patientProfile._id, patientUpdate);
+    }
+    
+    // Get updated user and patient data
+    const updatedUser = await User.findById(user._id).select('-password');
+    let result = { user: updatedUser };
+    
+    if (user.role === 'patient') {
+      const updatedPatient = await Patient.findOne({ userId: user._id });
+      result.patient = updatedPatient;
+    }
+    
+    res.json(result);
+    
+  } catch (err) {
+    console.error('Update profile error:', err.message);
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 

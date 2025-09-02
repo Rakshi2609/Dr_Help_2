@@ -95,6 +95,69 @@ router.get('/patients/:patientId', auth, async (req, res) => {
   }
 });
 
+// @route   PUT api/doctors/patients/:patientId
+// @desc    Update a patient's information
+// @access  Private (doctors only)
+router.put('/patients/:patientId', auth, async (req, res) => {
+  try {
+    // Check if user is a doctor
+    const user = await User.findById(req.user.id);
+    
+    if (!user || user.role !== 'doctor') {
+      return res.status(401).json({ msg: 'Not authorized as a doctor' });
+    }
+    
+    const doctor = await Doctor.findOne({ userId: req.user.id });
+    
+    if (!doctor) {
+      return res.status(404).json({ msg: 'Doctor profile not found' });
+    }
+    
+    // Find the patient and ensure they're assigned to this doctor
+    const patient = await Patient.findOne({ 
+      _id: req.params.patientId,
+      doctorId: doctor._id 
+    });
+    
+    if (!patient) {
+      return res.status(404).json({ msg: 'Patient not found or not assigned to you' });
+    }
+    
+    // Update patient fields
+    const patientUpdate = {};
+    
+    // Medical data
+    if (req.body.age !== undefined) patientUpdate.age = Number(req.body.age);
+    if (req.body.bmi !== undefined) patientUpdate.bmi = Number(req.body.bmi);
+    if (req.body.gender !== undefined) patientUpdate.gender = req.body.gender;
+    if (req.body.hasDiabetes !== undefined) {
+      // Handle string 'true'/'false' or boolean true/false
+      patientUpdate.hasDiabetes = req.body.hasDiabetes === 'true' || req.body.hasDiabetes === true;
+    }
+    if (req.body.painLevel !== undefined) patientUpdate.painLevel = Number(req.body.painLevel);
+    if (req.body.surgeryDuration !== undefined) patientUpdate.surgeryDuration = Number(req.body.surgeryDuration);
+    if (req.body.surgeryType !== undefined) patientUpdate.surgeryType = req.body.surgeryType;
+    if (req.body.anesthesiaType !== undefined) patientUpdate.anesthesiaType = req.body.anesthesiaType;
+    
+    // Notes
+    if (req.body.notes !== undefined) patientUpdate.notes = req.body.notes;
+    
+    console.log('Doctor updating patient profile with:', patientUpdate);
+    
+    const updatedPatient = await Patient.findByIdAndUpdate(
+      patient._id, 
+      patientUpdate,
+      { new: true }
+    ).populate('userId', ['name', 'email']);
+    
+    res.json(updatedPatient);
+    
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // @route   GET api/doctors/patients/:patientId/history
 // @desc    Get a patient's history (last 3 records of each type)
 // @access  Private (doctors only)

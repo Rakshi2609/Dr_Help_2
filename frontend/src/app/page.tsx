@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,40 @@ const cardVariants = {
 }
 
 export default function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  
+  useEffect(() => {
+    // Check if user is logged in
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const role = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null
+      
+      setIsLoggedIn(!!token)
+      setUserRole(role)
+      
+      // Add event listener for auth changes
+      const handleAuthChange = () => {
+        try {
+          setIsLoggedIn(!!localStorage.getItem('token'))
+          setUserRole(localStorage.getItem('userRole'))
+        } catch (error) {
+          console.error('Error reading from localStorage:', error)
+        }
+      }
+      
+      window.addEventListener('storage', handleAuthChange)
+      window.addEventListener('auth-changed', handleAuthChange)
+      
+      return () => {
+        window.removeEventListener('storage', handleAuthChange)
+        window.removeEventListener('auth-changed', handleAuthChange)
+      }
+    } catch (error) {
+      console.error('Error in HomePage auth effect:', error)
+    }
+  }, [])
+  
   useEffect(() => {
     ;(async () => {
       const LocomotiveScroll = (await import('locomotive-scroll')).default
@@ -79,19 +113,33 @@ export default function HomePage() {
               quality of life.
             </p>
             <div className="mt-8 flex justify-center gap-4">
-              <Button asChild size="lg" className="rounded-full px-8 text-lg">
-                <Link href="/auth/signup">Get Started</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-full px-8 text-lg"
-              >
-                <Link href="/auth/login">
-                  Sign In <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+              {!isLoggedIn ? (
+                <>
+                  <Button asChild size="lg" className="rounded-full px-8 text-lg">
+                    <Link href="/auth/signup">Get Started</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full px-8 text-lg"
+                  >
+                    <Link href="/auth/login">
+                      Sign In <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full px-8 text-lg"
+                >
+                  <Link href={userRole === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard'}>
+                    Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </motion.section>

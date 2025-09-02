@@ -10,6 +10,40 @@ const patientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor'
   },
+  // Patient demographics and medical data
+  age: {
+    type: Number,
+    default: 0
+  },
+  bmi: {
+    type: Number,
+    default: 0
+  },
+  gender: {
+    type: String,
+    enum: ['M', 'F', 'Other'],
+    default: 'Other'
+  },
+  hasDiabetes: {
+    type: Boolean,
+    default: false
+  },
+  surgeryDuration: {
+    type: Number,
+    default: 0
+  },
+  surgeryType: {
+    type: String,
+    default: ''
+  },
+  anesthesiaType: {
+    type: String,
+    default: ''
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
   // Store the last 3 pain scores
   painScores: [{
     score: {

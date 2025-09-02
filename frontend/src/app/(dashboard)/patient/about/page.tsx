@@ -1,23 +1,5 @@
-import { Suspense } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+// Directly re-export the shared about page
+export { default } from '@/app/(dashboard)/(shared)/about/page'
 
-// We're using a dynamic import with next/dynamic to handle the server component
-import dynamic from 'next/dynamic'
-
-// Import the shared page with ssr disabled to avoid hydration issues
-const AboutPageShared = dynamic(
-  () => import('@/app/(dashboard)/(shared)/about/page'),
-  { ssr: false }
-)
-
-export default function AboutPage() {
-  return (
-    <Suspense fallback={
-      <Card className="w-full h-[300px] flex items-center justify-center">
-        <CardContent>Loading about page...</CardContent>
-      </Card>
-    }>
-      <AboutPageShared />
-    </Suspense>
-  )
-}
+// The previous implementation had issues with dynamic imports
+// We're directly re-exporting the server component instead
